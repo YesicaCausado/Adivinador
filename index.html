@@ -2,171 +2,117 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Adivina la Canción 🎶</title>
+  <title>🎵 Adivina la Canción</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #1e1e2f, #2d2d44);
-      color: #fff;
-      margin: 0;
-    }
-
-    .container {
+      font-family: Arial, sans-serif;
       text-align: center;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-      width: 350px;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      padding: 20px;
     }
-
-    h1 {
-      font-size: 1.8em;
-      margin-bottom: 15px;
-      color: #ffcc70;
-    }
-
-    button {
-      background: #ffcc70;
-      border: none;
-      padding: 12px 20px;
-      margin: 10px;
-      border-radius: 12px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: 0.3s;
-      width: 90%;
-    }
-
-    button:hover {
-      background: #ffb347;
-      transform: scale(1.05);
-    }
-
+    h1 { font-size: 2em; }
+    #player { margin: 20px auto; }
     .options {
-      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 400px;
+      margin: 20px auto;
     }
-
-    .message {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 1.1em;
+    button {
+      background: #ff4757;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 1em;
+      transition: 0.3s;
     }
-
-    /* iframe oculto solo para reproducir el audio */
-    #player {
-      width: 1px;
-      height: 1px;
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-      visibility: hidden;
-    }
+    button:hover { background: #ff6b81; }
+    #message { font-size: 1.2em; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎶 Adivina la Canción</h1>
-    <button onclick="playSnippet()">▶️ Reproducir fragmento</button>
-    <div class="options" id="options"></div>
-    <div class="message" id="message"></div>
-  </div>
-
+  <h1>🎶 Adivina la Canción 🎶</h1>
   <div id="player"></div>
+  <button onclick="playSnippet()">▶️ Reproducir fragmento</button>
+  <div class="options" id="options"></div>
+  <p id="message"></p>
 
   <script>
-    const apiKey = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // 🔑 pon tu API Key de YouTube
-    let songs = [];
-    let correctSong = null;
+    const API_KEY = "YOUR_API_KEY"; // 🔑 Reemplaza con tu clave
     let player;
+    let currentSong = {};
+    let songs = [];
 
-    // Cargar canciones populares
-    async function loadSongs() {
-      try {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&chart=mostPopular&videoCategoryId=10&maxResults=20&key=${apiKey}`
-        );
-        const data = await res.json();
-
-        // Filtrar resultados válidos que tengan videoId
-        songs = data.items.filter(
-          item => item.id && item.id.videoId && item.snippet
-        );
-
-        pickSong();
-      } catch (err) {
-        console.error("Error cargando canciones:", err);
-      }
-    }
-
-    function pickSong() {
-      if (songs.length < 4) return;
-
-      correctSong = songs[Math.floor(Math.random() * songs.length)];
-
-      let options = [correctSong];
-      while (options.length < 4) {
-        let candidate = songs[Math.floor(Math.random() * songs.length)];
-        if (!options.includes(candidate)) options.push(candidate);
-      }
-
-      options = options.sort(() => Math.random() - 0.5);
-
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
-      options.forEach(song => {
-        const btn = document.createElement("button");
-        btn.textContent = song.snippet.title;
-        btn.onclick = () => checkAnswer(song);
-        optionsDiv.appendChild(btn);
-      });
-    }
-
-    function checkAnswer(song) {
-      const message = document.getElementById("message");
-      if (song.id.videoId === correctSong.id.videoId) {
-        message.textContent = "✅ ¡Correcto!";
-        message.style.color = "#7CFC00";
-      } else {
-        message.textContent = "❌ Incorrecto. Era: " + correctSong.snippet.title;
-        message.style.color = "#FF6B6B";
-      }
-
-      setTimeout(pickSong, 2000);
-    }
-
-    // Reproducir fragmento de audio
-    function playSnippet() {
-      if (!correctSong) return;
-
-      if (player) player.destroy();
-
-      player = new YT.Player("player", {
-        videoId: correctSong.id.videoId,
-        playerVars: { autoplay: 1 },
-        events: {
-          onReady: e => {
-            e.target.unMute();
-            e.target.playVideo();
-
-            setTimeout(() => {
-              e.target.stopVideo();
-            }, 10000); // 🎵 10 segundos de audio
-          }
-        }
-      });
-    }
-
-    // Cargar API de YouTube
-    let tag = document.createElement("script");
+    // 1. Cargar API YouTube Player
+    const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     document.body.appendChild(tag);
 
-    window.onYouTubeIframeAPIReady = loadSongs;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "0",
+        width: "0",
+        videoId: "",
+      });
+      loadSongs();
+    }
+
+    // 2. Obtener canciones populares (query "music")
+    async function loadSongs() {
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=music&key=${API_KEY}`);
+      const data = await res.json();
+      songs = data.items;
+      newRound();
+    }
+
+    // 3. Nuevo reto
+    function newRound() {
+      document.getElementById("message").textContent = "";
+      const randomIndex = Math.floor(Math.random() * songs.length);
+      currentSong = songs[randomIndex];
+      const correctTitle = currentSong.snippet.title;
+
+      // Crear opciones (1 correcta + 3 incorrectas)
+      let options = [correctTitle];
+      while (options.length < 4) {
+        const opt = songs[Math.floor(Math.random() * songs.length)].snippet.title;
+        if (!options.includes(opt)) options.push(opt);
+      }
+
+      // Mezclar opciones
+      options = options.sort(() => Math.random() - 0.5);
+
+      // Mostrar botones
+      const container = document.getElementById("options");
+      container.innerHTML = "";
+      options.forEach(title => {
+        const btn = document.createElement("button");
+        btn.textContent = title;
+        btn.onclick = () => checkAnswer(title);
+        container.appendChild(btn);
+      });
+    }
+
+    // 4. Reproducir fragmento (10s)
+    function playSnippet() {
+      if (!currentSong.id) return;
+      player.loadVideoById(currentSong.id.videoId, 30, "small"); // empieza en 30s
+      setTimeout(() => player.stopVideo(), 10000); // se detiene en 10s
+    }
+
+    // 5. Validar respuesta
+    function checkAnswer(selected) {
+      if (selected === currentSong.snippet.title) {
+        document.getElementById("message").textContent = "✅ ¡Correcto!";
+      } else {
+        document.getElementById("message").textContent = `❌ Incorrecto. Era: ${currentSong.snippet.title}`;
+      }
+      setTimeout(newRound, 3000);
+    }
   </script>
 </body>
 </html>
