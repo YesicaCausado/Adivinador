@@ -4,115 +4,170 @@
   <meta charset="UTF-8">
   <title>🎵 Adivina la Canción</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: #fff;
+    }
+
+    .game-container {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px;
       text-align: center;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: white;
-      padding: 20px;
+      width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      animation: fadeIn 1s ease-in-out;
     }
-    h1 { font-size: 2em; }
-    #player { margin: 20px auto; }
-    .options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      max-width: 400px;
-      margin: 20px auto;
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 700;
+      color: #f5f5f5;
+    }
+
+    #player {
+      margin: 15px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
     button {
-      background: #ff4757;
+      margin: 10px;
+      padding: 12px 20px;
       border: none;
-      padding: 10px;
-      border-radius: 8px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff9966, #ff5e62);
       color: white;
+      font-size: 16px;
       cursor: pointer;
-      font-size: 1em;
-      transition: 0.3s;
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
-    button:hover { background: #ff6b81; }
-    #message { font-size: 1.2em; margin-top: 20px; }
+
+    button:hover {
+      transform: translateY(-3px) scale(1.05);
+      background: linear-gradient(135deg, #ff5e62, #ff9966);
+      box-shadow: 0 5px 20px rgba(255, 100, 120, 0.5);
+    }
+
+    #options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      background: linear-gradient(135deg, #36d1dc, #5b86e5);
+    }
+
+    #options button:hover {
+      background: linear-gradient(135deg, #5b86e5, #36d1dc);
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: 600;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h1>🎶 Adivina la Canción 🎶</h1>
-  <div id="player"></div>
-  <button onclick="playSnippet()">▶️ Reproducir fragmento</button>
-  <div class="options" id="options"></div>
-  <p id="message"></p>
+  <div class="game-container">
+    <h1>🎵 Adivina la Canción</h1>
+    <div id="player"></div>
+    <button onclick="playSnippet()">▶ Reproducir fragmento</button>
+    <div id="options"></div>
+    <div id="message"></div>
+  </div>
 
+  <!-- YouTube API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const API_KEY = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // 🔑 Reemplaza con tu clave
-    let player;
-    let currentSong = {};
-    let songs = [];
-
-    // 1. Cargar API YouTube Player
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
+    const API_KEY = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // Pega aquí tu API Key
+    let player, correctTitle = "";
+    
+    async function fetchPopularSongs() {
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&chart=mostPopular&type=video&videoCategoryId=10&maxResults=5&key=${API_KEY}`);
+      const data = await res.json();
+      return data.items;
+    }
 
     function onYouTubeIframeAPIReady() {
-      player = new YT.Player("player", {
-        height: "0",
-        width: "0",
-        videoId: "",
+      player = new YT.Player('player', {
+        height: '200',
+        width: '300',
+        videoId: '',
+        playerVars: { autoplay: 0 }
       });
-      loadSongs();
     }
 
-    // 2. Obtener canciones populares (query "music")
-    async function loadSongs() {
-      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=music&key=${API_KEY}`);
-      const data = await res.json();
-      songs = data.items;
-      newRound();
-    }
-
-    // 3. Nuevo reto
-    function newRound() {
-      document.getElementById("message").textContent = "";
+    async function loadGame() {
+      const songs = await fetchPopularSongs();
       const randomIndex = Math.floor(Math.random() * songs.length);
-      currentSong = songs[randomIndex];
-      const correctTitle = currentSong.snippet.title;
+      const chosenSong = songs[randomIndex];
+      correctTitle = chosenSong.snippet.title;
 
-      // Crear opciones (1 correcta + 3 incorrectas)
+      player.loadVideoById(chosenSong.id.videoId);
+      player.stopVideo();
+
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = "";
+
       let options = [correctTitle];
       while (options.length < 4) {
-        const opt = songs[Math.floor(Math.random() * songs.length)].snippet.title;
-        if (!options.includes(opt)) options.push(opt);
+        let randomSong = songs[Math.floor(Math.random() * songs.length)].snippet.title;
+        if (!options.includes(randomSong)) options.push(randomSong);
       }
-
-      // Mezclar opciones
       options = options.sort(() => Math.random() - 0.5);
 
-      // Mostrar botones
-      const container = document.getElementById("options");
-      container.innerHTML = "";
       options.forEach(title => {
         const btn = document.createElement("button");
         btn.textContent = title;
         btn.onclick = () => checkAnswer(title);
-        container.appendChild(btn);
+        optionsDiv.appendChild(btn);
       });
+
+      document.getElementById("message").textContent = "";
     }
 
-    // 4. Reproducir fragmento (10s)
     function playSnippet() {
-      if (!currentSong.id) return;
-      player.loadVideoById(currentSong.id.videoId, 30, "small"); // empieza en 30s
-      setTimeout(() => player.stopVideo(), 10000); // se detiene en 10s
+      player.playVideo();
+      setTimeout(() => {
+        player.pauseVideo();
+      }, 10000); // 10 segundos de snippet
     }
 
-    // 5. Validar respuesta
     function checkAnswer(selected) {
-      if (selected === currentSong.snippet.title) {
-        document.getElementById("message").textContent = "✅ ¡Correcto!";
+      const message = document.getElementById("message");
+      if (selected === correctTitle) {
+        message.textContent = "✅ ¡Correcto!";
+        message.style.color = "#4CAF50";
       } else {
-        document.getElementById("message").textContent = `❌ Incorrecto. Era: ${currentSong.snippet.title}`;
+        message.textContent = "❌ Incorrecto. Era: " + correctTitle;
+        message.style.color = "#ff4d4d";
       }
-      setTimeout(newRound, 3000);
+      setTimeout(loadGame, 3000);
     }
+
+    loadGame();
   </script>
 </body>
 </html>
