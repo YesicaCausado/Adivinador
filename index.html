@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adivina la Canción</title>
+  
+  <!-- Manifest y colores -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a84ff">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    h1 {
+      color: #0a84ff;
+    }
+    button {
+      background: #0a84ff;
+      border: none;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #0070e0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 Adivina la Canción 🎶</h1>
+  <p>Escucha el fragmento y trata de adivinar.</p>
+  <button id="playBtn">▶️ Reproducir</button>
+
+  <script>
+    // Lógica del botón
+    document.getElementById("playBtn").addEventListener("click", () => {
+      alert("Aquí iría el audio de la canción 😁");
+    });
+
+    // Registro del Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(() => {
+        console.log("Service Worker registrado ✅");
+      }).catch(err => console.log("SW error:", err));
+    }
+  </script>
+</body>
+</html>
