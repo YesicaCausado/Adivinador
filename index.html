@@ -2,159 +2,171 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Adivina la Canción 🎵</title>
+  <title>Adivina la Canción 🎶</title>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1e1e2f, #2a2a40);
-      color: #fff;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
+      background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+      color: #fff;
       margin: 0;
+    }
+
+    .container {
       text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      width: 350px;
     }
 
     h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
+      font-size: 1.8em;
+      margin-bottom: 15px;
+      color: #ffcc70;
     }
 
     button {
-      background: #ff4757;
+      background: #ffcc70;
       border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      color: white;
-      font-size: 1rem;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 12px;
+      font-size: 1em;
       cursor: pointer;
-      margin-top: 20px;
-      transition: all 0.3s ease;
+      transition: 0.3s;
+      width: 90%;
     }
 
     button:hover {
-      background: #e84118;
+      background: #ffb347;
       transform: scale(1.05);
     }
 
     .options {
-      display: grid;
-      gap: 12px;
-      margin-top: 30px;
-      max-width: 300px;
-      width: 100%;
-    }
-
-    .option {
-      background: #2f3542;
-      border: 2px solid transparent;
-      padding: 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .option:hover {
-      border-color: #ff4757;
-      background: #3b3f54;
-    }
-
-    #result {
       margin-top: 20px;
-      font-size: 1.2rem;
-      font-weight: bold;
     }
 
-    /* Ocultar el video (solo queda audio) */
+    .message {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    /* iframe oculto solo para reproducir el audio */
     #player {
-      position: absolute;
-      left: -9999px;
       width: 1px;
       height: 1px;
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      visibility: hidden;
     }
   </style>
 </head>
 <body>
-  <h1>🎶 Adivina la Canción</h1>
-  <button onclick="playSnippet()">▶ Reproducir Fragmento</button>
-  <div class="options" id="options"></div>
-  <p id="result"></p>
+  <div class="container">
+    <h1>🎶 Adivina la Canción</h1>
+    <button onclick="playSnippet()">▶️ Reproducir fragmento</button>
+    <div class="options" id="options"></div>
+    <div class="message" id="message"></div>
+  </div>
 
-  <!-- Player oculto -->
   <div id="player"></div>
 
   <script>
-    const API_KEY = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // <-- pega tu API Key
+    const apiKey = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // 🔑 pon tu API Key de YouTube
+    let songs = [];
+    let correctSong = null;
     let player;
-    let currentSong = {};
-    let allSongs = [];
 
-    // Cargar Iframe Player API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
+    // Cargar canciones populares
+    async function loadSongs() {
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&chart=mostPopular&videoCategoryId=10&maxResults=20&key=${apiKey}`
+        );
+        const data = await res.json();
 
-    function onYouTubeIframeAPIReady() {
+        // Filtrar resultados válidos que tengan videoId
+        songs = data.items.filter(
+          item => item.id && item.id.videoId && item.snippet
+        );
+
+        pickSong();
+      } catch (err) {
+        console.error("Error cargando canciones:", err);
+      }
+    }
+
+    function pickSong() {
+      if (songs.length < 4) return;
+
+      correctSong = songs[Math.floor(Math.random() * songs.length)];
+
+      let options = [correctSong];
+      while (options.length < 4) {
+        let candidate = songs[Math.floor(Math.random() * songs.length)];
+        if (!options.includes(candidate)) options.push(candidate);
+      }
+
+      options = options.sort(() => Math.random() - 0.5);
+
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      options.forEach(song => {
+        const btn = document.createElement("button");
+        btn.textContent = song.snippet.title;
+        btn.onclick = () => checkAnswer(song);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(song) {
+      const message = document.getElementById("message");
+      if (song.id.videoId === correctSong.id.videoId) {
+        message.textContent = "✅ ¡Correcto!";
+        message.style.color = "#7CFC00";
+      } else {
+        message.textContent = "❌ Incorrecto. Era: " + correctSong.snippet.title;
+        message.style.color = "#FF6B6B";
+      }
+
+      setTimeout(pickSong, 2000);
+    }
+
+    // Reproducir fragmento de audio
+    function playSnippet() {
+      if (!correctSong) return;
+
+      if (player) player.destroy();
+
       player = new YT.Player("player", {
-        height: "1",
-        width: "1",
+        videoId: correctSong.id.videoId,
+        playerVars: { autoplay: 1 },
         events: {
-          onReady: loadSongs
+          onReady: e => {
+            e.target.unMute();
+            e.target.playVideo();
+
+            setTimeout(() => {
+              e.target.stopVideo();
+            }, 10000); // 🎵 10 segundos de audio
+          }
         }
       });
     }
 
-    async function loadSongs() {
-      const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&chart=mostPopular&type=video&videoCategoryId=10&maxResults=10&key=${API_KEY}`
-      );
-      const data = await res.json();
-      allSongs = data.items;
-      pickSong();
-    }
+    // Cargar API de YouTube
+    let tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
 
-    function pickSong() {
-      currentSong = allSongs[Math.floor(Math.random() * allSongs.length)];
-      const options = [currentSong.snippet.title];
-      while (options.length < 4) {
-        const random = allSongs[Math.floor(Math.random() * allSongs.length)].snippet.title;
-        if (!options.includes(random)) options.push(random);
-      }
-      options.sort(() => Math.random() - 0.5);
-
-      const optionsContainer = document.getElementById("options");
-      optionsContainer.innerHTML = "";
-      options.forEach(opt => {
-        const btn = document.createElement("div");
-        btn.className = "option";
-        btn.textContent = opt;
-        btn.onclick = () => checkAnswer(opt);
-        optionsContainer.appendChild(btn);
-      });
-    }
-
-    function playSnippet() {
-      player.loadVideoById(currentSong.id.videoId, Math.floor(Math.random() * 30), "small");
-      setTimeout(() => player.stopVideo(), 8000); // 8 segundos de fragmento
-    }
-
-    function checkAnswer(answer) {
-      const result = document.getElementById("result");
-      if (answer === currentSong.snippet.title) {
-        result.textContent = "✅ ¡Correcto!";
-        result.style.color = "#2ecc71";
-      } else {
-        result.textContent = "❌ Incorrecto. Era: " + currentSong.snippet.title;
-        result.style.color = "#e74c3c";
-      }
-      setTimeout(() => {
-        result.textContent = "";
-        pickSong();
-      }, 3000);
-    }
+    window.onYouTubeIframeAPIReady = loadSongs;
   </script>
 </body>
 </html>
