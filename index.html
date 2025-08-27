@@ -9,161 +9,731 @@
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/128/3408/3408796.png">
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: 20px;
+      animation: backgroundShift 10s ease-in-out infinite alternate;
     }
+
+    @keyframes backgroundShift {
+      0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+      100% { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    }
+
     h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+      animation: bounce 2s ease-in-out infinite;
     }
-    #player { display: none; }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+      60% { transform: translateY(-3px); }
+    }
+
     .game-card {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 20px;
-      border-radius: 20px;
-      max-width: 500px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px;
+      border-radius: 25px;
+      max-width: 600px;
       margin: auto;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-      backdrop-filter: blur(6px);
-      animation: fadeIn 1s ease-in-out;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: slideUp 0.8s ease-out;
     }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(20px);}
-      to {opacity: 1; transform: translateY(0);}
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 20px;
+
+    .score-display {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
     }
-    button {
-      background: #ff4757;
+
+    .score-item {
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 15px;
+      backdrop-filter: blur(5px);
+    }
+
+    .player-container {
+      margin: 20px 0;
+      position: relative;
+    }
+
+    #player {
+      width: 100%;
+      max-width: 480px;
+      height: 270px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
       border: none;
-      padding: 12px;
-      border-radius: 12px;
+      padding: 12px 20px;
+      border-radius: 25px;
       color: white;
       cursor: pointer;
-      font-size: 1em;
-      transition: all 0.3s;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    button:hover {
-      background: #ff6b81;
-      transform: translateY(-2px);
-    }
-    #playBtn {
-      font-size: 1.2em;
-      padding: 14px 22px;
-      margin-top: 15px;
-      border-radius: 50px;
-      background: linear-gradient(135deg,#ff6b81,#ff4757);
-    }
-    #message {
-      font-size: 1.3em;
-      margin-top: 20px;
+      font-size: 1rem;
       font-weight: bold;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(238, 90, 82, 0.4);
+      min-width: 120px;
+    }
+
+    .control-btn:hover {
+      background: linear-gradient(135deg, #ff8a80, #ff5722);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(238, 90, 82, 0.6);
+    }
+
+    .control-btn:active {
+      transform: translateY(0);
+    }
+
+    .control-btn:disabled {
+      background: linear-gradient(135deg, #bbb, #999);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .option-btn {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      border: none;
+      padding: 15px 20px;
+      border-radius: 15px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .option-btn:hover::before {
+      left: 100%;
+    }
+
+    .option-btn:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(79, 172, 254, 0.5);
+    }
+
+    .option-btn.correct {
+      background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    .option-btn.incorrect {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      animation: shake 0.6s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    #message {
+      font-size: 1.4rem;
+      margin: 20px 0;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .game-card {
+        padding: 20px;
+        margin: 10px;
+      }
+      
+      .options {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .score-display {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+
+    .difficulty-selector {
+      margin: 20px 0;
+    }
+
+    .difficulty-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 16px;
+      margin: 0 5px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .difficulty-btn.active {
+      background: rgba(255,255,255,0.4);
+      border-color: rgba(255,255,255,0.8);
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
   <h1>🎶 Adivina la Canción 🎶</h1>
+  
   <div class="game-card">
-    <div id="player"></div>
-    <button id="playBtn" onclick="playSnippet()">▶️ Reproducir fragmento</button>
+    <div class="score-display">
+      <div class="score-item">
+        🏆 Puntos: <span id="score">0</span>
+      </div>
+      <div class="score-item">
+        🎯 Ronda: <span id="round">1</span>
+      </div>
+      <div class="score-item">
+        ⏱️ Tiempo: <span id="timer">30</span>s
+      </div>
+    </div>
+
+    <div class="difficulty-selector">
+      <button class="difficulty-btn active" onclick="setDifficulty('easy')">Fácil</button>
+      <button class="difficulty-btn" onclick="setDifficulty('medium')">Medio</button>
+      <button class="difficulty-btn" onclick="setDifficulty('hard')">Difícil</button>
+    </div>
+
+    <div class="player-container">
+      <div id="player"></div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="controls">
+      <button class="control-btn" id="playBtn" onclick="playSnippet()">
+        ▶️ Reproducir
+      </button>
+      <button class="control-btn" id="pauseBtn" onclick="pauseVideo()" disabled>
+        ⏸️ Pausar
+      </button>
+      <button class="control-btn" onclick="skipRound()">
+        ⏭️ Saltar
+      </button>
+      <button class="control-btn" onclick="resetGame()">
+        🔄 Reiniciar
+      </button>
+    </div>
+
     <div class="options" id="options"></div>
-    <p id="message"></p>
+    <div id="message"></div>
   </div>
+
+  <!-- Archivos complementarios que necesitas crear: -->
+  
+  <!-- manifest.json -->
+  <!-- 
+  {
+    "name": "Adivina la Canción Pro",
+    "short_name": "AdivinaCanción",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#6a1b9a",
+    "icons": [
+      {
+        "src": "https://cdn-icons-png.flaticon.com/192/3408/3408796.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "https://cdn-icons-png.flaticon.com/512/3408/3408796.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  }
+  -->
+
+  <!-- service-worker.js -->
+  <!-- 
+  const CACHE_NAME = 'adivina-cancion-v1';
+  const urlsToCache = [
+    './',
+    './index.html',
+    './manifest.json',
+    'https://cdn-icons-png.flaticon.com/128/3408/3408796.png',
+    'https://www.youtube.com/iframe_api'
+  ];
+
+  self.addEventListener('install', event => {
+    event.waitUntil(
+      caches.open(CACHE_NAME)
+        .then(cache => {
+          console.log('Cache abierto');
+          return cache.addAll(urlsToCache);
+        })
+    );
+  });
+
+  self.addEventListener('fetch', event => {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request);
+        }
+      )
+    );
+  });
+
+  self.addEventListener('activate', event => {
+    event.waitUntil(
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    );
+  });
+  -->
 
   <script>
     let player;
     let currentSong = {};
-    let songs = [
-      // 🎵 Canciones precargadas para offline
-      {title: "Shape of You", url: "https://www.youtube.com/embed/JGwWNGJdvx8"},
-      {title: "Blinding Lights", url: "https://www.youtube.com/embed/4NRXx6U8ABQ"},
-      {title: "Dance Monkey", url: "https://www.youtube.com/embed/q0hyYWKXF0Q"},
-      {title: "Despacito", url: "https://www.youtube.com/embed/kJQP7kiw5Fk"},
-      {title: "Uptown Funk", url: "https://www.youtube.com/embed/OPf0YbXqDm0"}
-    ];
+    let gameState = {
+      score: 0,
+      round: 1,
+      difficulty: 'easy',
+      timeLeft: 30,
+      gameTimer: null,
+      isPlaying: false,
+      roundStartTime: 0
+    };
 
-    // Inicializar reproductor vacío
+    // Canciones organizadas por dificultad
+    const songDatabase = {
+      easy: [
+        {title: "Shape of You", id: "JGwWNGJdvx8", artist: "Ed Sheeran"},
+        {title: "Despacito", id: "kJQP7kiw5Fk", artist: "Luis Fonsi"},
+        {title: "Uptown Funk", id: "OPf0YbXqDm0", artist: "Bruno Mars"},
+        {title: "Someone Like You", id: "hLQl3WQQoQ0", artist: "Adele"},
+        {title: "Rolling in the Deep", id: "rYEDA3JcQqw", artist: "Adele"},
+        {title: "Counting Stars", id: "hT_nvWreIhg", artist: "OneRepublic"},
+        {title: "Roar", id: "CevxZvSJLk8", artist: "Katy Perry"},
+        {title: "Happy", id: "ZbZSe6N_BXs", artist: "Pharrell Williams"}
+      ],
+      medium: [
+        {title: "Blinding Lights", id: "4NRXx6U8ABQ", artist: "The Weeknd"},
+        {title: "Dance Monkey", id: "q0hyYWKXF0Q", artist: "Tones and I"},
+        {title: "Watermelon Sugar", id: "E07s5ZYygMg", artist: "Harry Styles"},
+        {title: "Levitating", id: "TUVcZfQe-Kw", artist: "Dua Lipa"},
+        {title: "Good 4 U", id: "gNi_6U5Pm_o", artist: "Olivia Rodrigo"},
+        {title: "Stay", id: "kTJczUoc26U", artist: "The Kid LAROI & Justin Bieber"},
+        {title: "Bad Guy", id: "DyDfgMOUjCI", artist: "Billie Eilish"},
+        {title: "Sunflower", id: "ApXoWvfEYVU", artist: "Post Malone & Swae Lee"}
+      ],
+      hard: [
+        {title: "Bohemian Rhapsody", id: "fJ9rUzIMcZQ", artist: "Queen"},
+        {title: "Stairway to Heaven", id: "QkF3oxziUI4", artist: "Led Zeppelin"},
+        {title: "Hotel California", id: "BciS5krYL80", artist: "Eagles"},
+        {title: "Imagine", id: "YkgkThdzX-8", artist: "John Lennon"},
+        {title: "Like a Rolling Stone", id: "IwOfCgkyEj0", artist: "Bob Dylan"},
+        {title: "Smells Like Teen Spirit", id: "hTWKbfoikeg", artist: "Nirvana"},
+        {title: "Billie Jean", id: "Zi_XLOBDo_Y", artist: "Michael Jackson"},
+        {title: "Sweet Child O' Mine", id: "1w7OgIMMRc4", artist: "Guns N' Roses"}
+      ]
+    };
+
+    // Inicializar YouTube Player
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("player", {
-        height: "0",
-        width: "0",
-        videoId: ""
+        height: "270",
+        width: "480",
+        videoId: "",
+        playerVars: {
+          'playsinline': 1,
+          'controls': 0,
+          'disablekb': 1,
+          'modestbranding': 1,
+          'rel': 0
+        },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
+        }
       });
+    }
+
+    function onPlayerReady(event) {
       newRound();
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data == YT.PlayerState.PLAYING) {
+        gameState.isPlaying = true;
+        document.getElementById('playBtn').disabled = true;
+        document.getElementById('pauseBtn').disabled = false;
+        startPlayProgress();
+      } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+        gameState.isPlaying = false;
+        document.getElementById('playBtn').disabled = false;
+        document.getElementById('pauseBtn').disabled = true;
+      }
+    }
+
+    // Gestión de dificultad
+    function setDifficulty(level) {
+      gameState.difficulty = level;
+      document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Ajustar tiempo según dificultad
+      switch(level) {
+        case 'easy': gameState.timeLeft = 45; break;
+        case 'medium': gameState.timeLeft = 30; break;
+        case 'hard': gameState.timeLeft = 20; break;
+      }
+      
+      resetGame();
     }
 
     // Nueva ronda
     function newRound() {
-      document.getElementById("message").textContent = "";
+      clearTimers();
+      document.getElementById("message").innerHTML = "";
+      
+      // Actualizar UI
+      document.getElementById('round').textContent = gameState.round;
+      document.getElementById('score').textContent = gameState.score;
+      document.getElementById('timer').textContent = gameState.timeLeft;
+      
+      // Seleccionar canción aleatoria según dificultad
+      const songs = songDatabase[gameState.difficulty];
       const randomIndex = Math.floor(Math.random() * songs.length);
       currentSong = songs[randomIndex];
-      const correctTitle = currentSong.title;
+      
+      // Cargar video
+      if (player && player.loadVideoById) {
+        player.loadVideoById(currentSong.id);
+      }
+      
+      // Crear opciones
+      generateOptions();
+      
+      // Iniciar temporizador de ronda
+      startRoundTimer();
+      
+      // Resetear progreso
+      document.getElementById('progressFill').style.width = '0%';
+    }
 
+    function generateOptions() {
+      const songs = songDatabase[gameState.difficulty];
+      const correctTitle = currentSong.title;
+      
       // Crear opciones (1 correcta + 3 incorrectas)
       let options = [correctTitle];
       while (options.length < 4) {
-        const opt = songs[Math.floor(Math.random() * songs.length)].title;
-        if (!options.includes(opt)) options.push(opt);
+        const randomSong = songs[Math.floor(Math.random() * songs.length)];
+        if (!options.includes(randomSong.title)) {
+          options.push(randomSong.title);
+        }
       }
+      
+      // Mezclar opciones
       options = options.sort(() => Math.random() - 0.5);
-
+      
+      // Crear botones
       const container = document.getElementById("options");
       container.innerHTML = "";
       options.forEach(title => {
         const btn = document.createElement("button");
+        btn.className = "option-btn";
         btn.textContent = title;
-        btn.onclick = () => checkAnswer(title);
+        btn.onclick = () => checkAnswer(title, btn);
         container.appendChild(btn);
       });
     }
 
     // Reproducir fragmento
     function playSnippet() {
-      if (!currentSong.url) return;
-      const videoId = new URL(currentSong.url).searchParams.get("v");
-      player.loadVideoById(videoId, 30, "small");
-      setTimeout(() => player.stopVideo(), 10000);
+      if (!player || !currentSong.id) return;
+      
+      const startTime = Math.floor(Math.random() * 60) + 30; // Entre 30-90 segundos
+      player.seekTo(startTime);
+      player.playVideo();
+      
+      // Parar después de 15 segundos
+      setTimeout(() => {
+        if (gameState.isPlaying) {
+          player.pauseVideo();
+        }
+      }, 15000);
+    }
+
+    function pauseVideo() {
+      if (player && gameState.isPlaying) {
+        player.pauseVideo();
+      }
+    }
+
+    function startPlayProgress() {
+      let progress = 0;
+      const interval = setInterval(() => {
+        if (!gameState.isPlaying) {
+          clearInterval(interval);
+          return;
+        }
+        progress += 2;
+        document.getElementById('progressFill').style.width = Math.min(progress, 100) + '%';
+        if (progress >= 100) {
+          clearInterval(interval);
+        }
+      }, 300);
     }
 
     // Validar respuesta
-    function checkAnswer(selected) {
-      if (selected === currentSong.title) {
-        document.getElementById("message").textContent = "✅ ¡Correcto!";
+    function checkAnswer(selected, buttonElement) {
+      clearTimers();
+      
+      // Deshabilitar todos los botones
+      document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.disabled = true;
+      });
+      
+      const isCorrect = selected === currentSong.title;
+      
+      if (isCorrect) {
+        buttonElement.classList.add('correct');
+        const timeBonus = Math.floor(gameState.timeLeft / 5);
+        const difficultyMultiplier = gameState.difficulty === 'hard' ? 3 : gameState.difficulty === 'medium' ? 2 : 1;
+        const points = (100 + timeBonus) * difficultyMultiplier;
+        
+        gameState.score += points;
+        document.getElementById("message").innerHTML = `✅ ¡Correcto! +${points} puntos<br><small>${currentSong.artist}</small>`;
       } else {
-        document.getElementById("message").textContent = `❌ Incorrecto. Era: ${currentSong.title}`;
+        buttonElement.classList.add('incorrect');
+        // Mostrar respuesta correcta
+        document.querySelectorAll('.option-btn').forEach(btn => {
+          if (btn.textContent === currentSong.title) {
+            btn.classList.add('correct');
+          }
+        });
+        document.getElementById("message").innerHTML = `❌ Incorrecto<br><small>Era: ${currentSong.title} - ${currentSong.artist}</small>`;
       }
-      setTimeout(newRound, 2500);
+      
+      // Siguiente ronda después de 3 segundos
+      setTimeout(() => {
+        gameState.round++;
+        gameState.timeLeft = gameState.difficulty === 'easy' ? 45 : gameState.difficulty === 'medium' ? 30 : 20;
+        newRound();
+      }, 3000);
     }
 
-    // Cargar API YouTube
+    // Temporizadores
+    function startRoundTimer() {
+      gameState.gameTimer = setInterval(() => {
+        gameState.timeLeft--;
+        document.getElementById('timer').textContent = gameState.timeLeft;
+        
+        if (gameState.timeLeft <= 0) {
+          timeUp();
+        }
+      }, 1000);
+    }
+
+    function timeUp() {
+      clearTimers();
+      document.getElementById("message").innerHTML = `⏰ ¡Tiempo agotado!<br><small>Era: ${currentSong.title} - ${currentSong.artist}</small>`;
+      
+      // Mostrar respuesta correcta
+      document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === currentSong.title) {
+          btn.classList.add('correct');
+        }
+      });
+      
+      setTimeout(() => {
+        gameState.round++;
+        gameState.timeLeft = gameState.difficulty === 'easy' ? 45 : gameState.difficulty === 'medium' ? 30 : 20;
+        newRound();
+      }, 3000);
+    }
+
+    function clearTimers() {
+      if (gameState.gameTimer) {
+        clearInterval(gameState.gameTimer);
+        gameState.gameTimer = null;
+      }
+    }
+
+    // Funciones de control
+    function skipRound() {
+      if (confirm('¿Estás seguro de que quieres saltar esta ronda?')) {
+        clearTimers();
+        document.getElementById("message").innerHTML = `⏭️ Ronda saltada<br><small>Era: ${currentSong.title} - ${currentSong.artist}</small>`;
+        
+        setTimeout(() => {
+          gameState.round++;
+          gameState.timeLeft = gameState.difficulty === 'easy' ? 45 : gameState.difficulty === 'medium' ? 30 : 20;
+          newRound();
+        }, 2000);
+      }
+    }
+
+    function resetGame() {
+      if (confirm('¿Estás seguro de que quieres reiniciar el juego?')) {
+        clearTimers();
+        gameState = {
+          score: 0,
+          round: 1,
+          difficulty: gameState.difficulty,
+          timeLeft: gameState.difficulty === 'easy' ? 45 : gameState.difficulty === 'medium' ? 30 : 20,
+          gameTimer: null,
+          isPlaying: false,
+          roundStartTime: 0
+        };
+        
+        if (player && player.stopVideo) {
+          player.stopVideo();
+        }
+        
+        newRound();
+      }
+    }
+
+    // Cargar API de YouTube
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-  </script>
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-  <!-- Registrar Service Worker -->
-  <script>
+    // Registrar Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js")
         .then(() => console.log("✅ Service Worker registrado"))
         .catch(err => console.error("❌ Error SW:", err));
     }
+
+    // Prevenir que se cierre accidentalmente
+    window.addEventListener('beforeunload', function (e) {
+      if (gameState.score > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
   </script>
 </body>
 </html>
