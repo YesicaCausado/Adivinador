@@ -1,96 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/128/3408/3408796.png">
-  <meta name="theme-color" content="#6a1b9a">
-
   <meta charset="UTF-8">
   <title>🎵 Adivina la Canción</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6a1b9a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/128/3408/3408796.png">
+
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
+      margin: 0;
+      min-height: 100vh;
       background: linear-gradient(135deg, #1e3c72, #2a5298);
       color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       padding: 20px;
     }
-    h1 { font-size: 2em; }
-    #player { margin: 20px auto; }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    #player { display: none; }
+    .game-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 20px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
     .options {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      max-width: 400px;
-      margin: 20px auto;
+      gap: 12px;
+      margin-top: 20px;
     }
     button {
       background: #ff4757;
       border: none;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 12px;
+      border-radius: 12px;
       color: white;
       cursor: pointer;
       font-size: 1em;
-      transition: 0.3s;
+      transition: all 0.3s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    button:hover { background: #ff6b81; }
-    #message { font-size: 1.2em; margin-top: 20px; }
+    button:hover {
+      background: #ff6b81;
+      transform: translateY(-2px);
+    }
+    #playBtn {
+      font-size: 1.2em;
+      padding: 14px 22px;
+      margin-top: 15px;
+      border-radius: 50px;
+      background: linear-gradient(135deg,#ff6b81,#ff4757);
+    }
+    #message {
+      font-size: 1.3em;
+      margin-top: 20px;
+      font-weight: bold;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
   </style>
 </head>
 <body>
   <h1>🎶 Adivina la Canción 🎶</h1>
-  <div id="player"></div>
-  <button onclick="playSnippet()">▶️ Reproducir fragmento</button>
-  <div class="options" id="options"></div>
-  <p id="message"></p>
+  <div class="game-card">
+    <div id="player"></div>
+    <button id="playBtn" onclick="playSnippet()">▶️ Reproducir fragmento</button>
+    <div class="options" id="options"></div>
+    <p id="message"></p>
+  </div>
 
   <script>
-    const API_KEY = "AIzaSyBWM6ZPP0ZG-I8yZJD3oE5C3ap52JCyCFQ"; // 🔑 Reemplaza con tu clave
     let player;
     let currentSong = {};
-    let songs = [];
+    let songs = [
+      // 🎵 Canciones precargadas para offline
+      {title: "Shape of You", url: "https://www.youtube.com/embed/JGwWNGJdvx8"},
+      {title: "Blinding Lights", url: "https://www.youtube.com/embed/4NRXx6U8ABQ"},
+      {title: "Dance Monkey", url: "https://www.youtube.com/embed/q0hyYWKXF0Q"},
+      {title: "Despacito", url: "https://www.youtube.com/embed/kJQP7kiw5Fk"},
+      {title: "Uptown Funk", url: "https://www.youtube.com/embed/OPf0YbXqDm0"}
+    ];
 
-    // 1. Cargar API YouTube Player
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-
+    // Inicializar reproductor vacío
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("player", {
         height: "0",
         width: "0",
-        videoId: "",
+        videoId: ""
       });
-      loadSongs();
-    }
-
-    // 2. Obtener canciones populares (query "music")
-    async function loadSongs() {
-      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=music&key=${API_KEY}`);
-      const data = await res.json();
-      songs = data.items;
       newRound();
     }
 
-    // 3. Nuevo reto
+    // Nueva ronda
     function newRound() {
       document.getElementById("message").textContent = "";
       const randomIndex = Math.floor(Math.random() * songs.length);
       currentSong = songs[randomIndex];
-      const correctTitle = currentSong.snippet.title;
+      const correctTitle = currentSong.title;
 
       // Crear opciones (1 correcta + 3 incorrectas)
       let options = [correctTitle];
       while (options.length < 4) {
-        const opt = songs[Math.floor(Math.random() * songs.length)].snippet.title;
+        const opt = songs[Math.floor(Math.random() * songs.length)].title;
         if (!options.includes(opt)) options.push(opt);
       }
-
-      // Mezclar opciones
       options = options.sort(() => Math.random() - 0.5);
 
-      // Mostrar botones
       const container = document.getElementById("options");
       container.innerHTML = "";
       options.forEach(title => {
@@ -101,21 +133,36 @@
       });
     }
 
-    // 4. Reproducir fragmento (10s)
+    // Reproducir fragmento
     function playSnippet() {
-      if (!currentSong.id) return;
-      player.loadVideoById(currentSong.id.videoId, 30, "small"); // empieza en 30s
-      setTimeout(() => player.stopVideo(), 10000); // se detiene en 10s
+      if (!currentSong.url) return;
+      const videoId = new URL(currentSong.url).searchParams.get("v");
+      player.loadVideoById(videoId, 30, "small");
+      setTimeout(() => player.stopVideo(), 10000);
     }
 
-    // 5. Validar respuesta
+    // Validar respuesta
     function checkAnswer(selected) {
-      if (selected === currentSong.snippet.title) {
+      if (selected === currentSong.title) {
         document.getElementById("message").textContent = "✅ ¡Correcto!";
       } else {
-        document.getElementById("message").textContent = `❌ Incorrecto. Era: ${currentSong.snippet.title}`;
+        document.getElementById("message").textContent = `❌ Incorrecto. Era: ${currentSong.title}`;
       }
-      setTimeout(newRound, 3000);
+      setTimeout(newRound, 2500);
+    }
+
+    // Cargar API YouTube
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+  </script>
+
+  <!-- Registrar Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("✅ Service Worker registrado"))
+        .catch(err => console.error("❌ Error SW:", err));
     }
   </script>
 </body>
